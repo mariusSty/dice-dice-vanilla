@@ -11,13 +11,15 @@ import Render from "./experience/Render";
 // Constants
 const dices = [];
 const settings = {
+  font: 1,
   totalDices: 2,
-  click: () => {
-    for (const dice of dices) {
-      dice.addImpulse();
-    }
-  },
+  throw: throwDices,
 };
+const fonts = new Map([
+  [1, "autour"],
+  [2, "kanit"],
+  [3, "yuji"],
+]);
 const initialPositions = new Map([
   [0, { x: 0, z: 0 }],
   [1, { x: -2, z: 0 }],
@@ -47,6 +49,12 @@ fontLoader.load("/fonts/autour.json", (font) => {
   textGeometries.set("autour", createTextGeometries(font));
   if (dices.length === 0) createDices();
 });
+fontLoader.load("/fonts/kanit.json", (font) =>
+  textGeometries.set("kanit", createTextGeometries(font))
+);
+fontLoader.load("/fonts/yuji.json", (font) =>
+  textGeometries.set("yuji", createTextGeometries(font))
+);
 
 // Init
 const scene = new THREE.Scene();
@@ -68,13 +76,15 @@ gui
   .min(1)
   .max(9)
   .step(1)
-  .onFinishChange((total) => {
-    for (const dice of dices) {
-      dice.remove();
-    }
-    createDices(total);
-  });
-gui.add(settings, "click");
+  .onFinishChange((total) => createDices(total, settings.font));
+gui
+  .add(settings, "font")
+  .min(1)
+  .max(3)
+  .step(1)
+  .onFinishChange((fontKey) => createDices(settings.totalDices, fontKey));
+
+gui.add(settings, "throw");
 
 function tick() {
   requestAnimationFrame(tick);
@@ -105,7 +115,9 @@ function createTextGeometries(font) {
   return textGeometries;
 }
 
-function createDices(total = settings.totalDices, font = "autour") {
+function createDices(total = settings.totalDices, key = 1) {
+  const font = fonts.get(key);
+  removeDices();
   for (let i = 0; i < total; i++) {
     dices.push(
       new Dice(
@@ -118,5 +130,17 @@ function createDices(total = settings.totalDices, font = "autour") {
         textMaterial
       )
     );
+  }
+}
+
+function removeDices() {
+  for (const dice of dices) {
+    dice.remove();
+  }
+}
+
+function throwDices() {
+  for (const dice of dices) {
+    dice.addImpulse();
   }
 }
