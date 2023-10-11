@@ -109,7 +109,7 @@ gui.add(settings, "throw");
 
 function tick() {
   requestAnimationFrame(tick);
-  if (dices.length === 0) createDices();
+  if (dices.length === 0 && textGeometries.has("autour")) createDices();
   const elapsedTime = clock.getElapsedTime();
   const deltaTime = elapsedTime - oldElapsedTime;
   oldElapsedTime = elapsedTime;
