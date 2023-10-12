@@ -7,16 +7,20 @@ import Dice from "./experience/Dice";
 import Environment from "./experience/Environment";
 import Lights from "./experience/Lights";
 import Render from "./experience/Render";
+import circleFragmentShader from "./shaders/circle/fragment.glsl";
+import gradientFragmentShader from "./shaders/gradient/fragment.glsl";
+import randomFragmentShader from "./shaders/random/fragment.glsl";
+import vertexShader from "./shaders/vertex.glsl";
 
 // Constants
 const dices = [];
 const settings = {
-  color: 0x0000ff,
   font: 1,
-  metalness: 0,
-  roughness: 0,
+  primaryColor: 0x0000ff,
+  secondaryColor: 0x00ffff,
   textColor: 0xffffff,
   totalDices: 2,
+  type: 1,
   throw: throwDices,
 };
 const fonts = new Map([
@@ -40,12 +44,20 @@ const initialPositions = new Map([
 const fontLoader = new FontLoader();
 
 // Materials
-const material = new THREE.MeshStandardMaterial({
-  color: settings.color,
-  metalness: settings.metalness,
-  roughness: settings.roughness,
-});
 const textMaterial = new THREE.MeshBasicMaterial({ color: settings.textColor });
+const fragmentShaders = new Map([
+  [1, randomFragmentShader],
+  [2, gradientFragmentShader],
+  [3, circleFragmentShader],
+]);
+const material = new THREE.ShaderMaterial({
+  vertexShader,
+  fragmentShader: fragmentShaders.get(settings.type),
+  uniforms: {
+    uPrimary: { value: new THREE.Color(settings.primaryColor) },
+    uSecondary: { value: new THREE.Color(settings.secondaryColor) },
+  },
+});
 
 // Geometries
 const textGeometries = new Map();
@@ -88,23 +100,25 @@ gui
   .step(1)
   .onFinishChange((fontKey) => createDices(settings.totalDices, fontKey));
 gui
-  .addColor(settings, "color")
-  .onChange(() => material.color.set(settings.color));
+  .add(settings, "type")
+  .min(1)
+  .max(3)
+  .step(1)
+  .onFinishChange((type) => {
+    material.fragmentShader = fragmentShaders.get(type);
+    material.needsUpdate = true;
+  });
+gui
+  .addColor(settings, "primaryColor")
+  .onChange(() => material.uniforms.uPrimary.value.set(settings.primaryColor));
+gui
+  .addColor(settings, "secondaryColor")
+  .onChange(() =>
+    material.uniforms.uSecondary.value.set(settings.secondaryColor)
+  );
 gui
   .addColor(settings, "textColor")
   .onChange(() => textMaterial.color.set(settings.textColor));
-gui
-  .add(settings, "metalness")
-  .min(0)
-  .max(1)
-  .step(0.001)
-  .onChange(() => (material.metalness = settings.metalness));
-gui
-  .add(settings, "roughness")
-  .min(0)
-  .max(1)
-  .step(0.001)
-  .onChange(() => (material.roughness = settings.roughness));
 gui.add(settings, "throw");
 
 function tick() {
