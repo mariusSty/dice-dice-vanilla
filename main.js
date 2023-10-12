@@ -98,7 +98,7 @@ gui
   .min(1)
   .max(3)
   .step(1)
-  .onFinishChange((fontKey) => createDices(settings.totalDices, fontKey));
+  .onFinishChange((fontKey) => updateFonts(fontKey));
 gui
   .add(settings, "type")
   .min(1)
@@ -172,6 +172,15 @@ function createDices(total = settings.totalDices, key = settings.font) {
 function removeDices() {
   for (const dice of dices) {
     dice.remove();
+  }
+}
+
+function updateFonts(key) {
+  const font = fonts.get(key);
+  const newTextGeometries = textGeometries.get(font);
+  for (const dice of dices) {
+    dice.removeText();
+    dice.addText(newTextGeometries, textMaterial);
   }
 }
 
