@@ -20,15 +20,7 @@ const sixFacesRotations = new Map([
 ]);
 
 export default class Dice {
-  constructor(
-    scene,
-    world,
-    geometry,
-    material,
-    initialPosition,
-    textGeometries,
-    textMaterial
-  ) {
+  constructor(scene, world, geometry, material, textGeometries, textMaterial) {
     this.scene = scene;
     this.world = world;
     this.geometry = geometry;
@@ -42,14 +34,26 @@ export default class Dice {
 
     this.addText(textGeometries, textMaterial);
 
-    this.group.position.set(initialPosition.x, 3, initialPosition.z);
+    const randomX = Math.round((Math.random() - 0.5) * 9);
+    const randomZ = Math.round((Math.random() - 0.5) * 9);
+
+    const initialY = 3;
+
+    const rotationX = Math.random() * Math.PI * 2;
+    const rotationY = Math.random() * Math.PI * 2;
+
+    this.group.position.set(randomX, initialY, randomZ);
+    this.group.rotateX(rotationX);
+    this.group.rotateY(rotationY);
+
     scene.add(this.group);
 
     this.body = new CANNON.Body({
       mass: 1,
-      position: new CANNON.Vec3(initialPosition.x, 3, initialPosition.z),
       shape: new CANNON.Box(new CANNON.Vec3(0.5, 0.5, 0.5)),
     });
+    this.body.position.copy(this.group.position);
+    this.body.quaternion.copy(this.group.quaternion);
     this.world.addBody(this.body);
   }
 

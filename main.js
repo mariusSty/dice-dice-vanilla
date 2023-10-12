@@ -28,17 +28,6 @@ const fonts = new Map([
   [2, "kanit"],
   [3, "yuji"],
 ]);
-const initialPositions = new Map([
-  [0, { x: 0, z: 0 }],
-  [1, { x: -2, z: 0 }],
-  [2, { x: 2, z: 0 }],
-  [3, { x: 0, z: -2 }],
-  [4, { x: -2, z: -2 }],
-  [5, { x: 2, z: -2 }],
-  [6, { x: 0, z: 2 }],
-  [7, { x: -2, z: 2 }],
-  [8, { x: 2, z: 2 }],
-]);
 
 // Loaders
 const fontLoader = new FontLoader();
@@ -61,9 +50,10 @@ const material = new THREE.ShaderMaterial({
 
 // Geometries
 const textGeometries = new Map();
-fontLoader.load("/fonts/autour.json", (font) =>
-  textGeometries.set("autour", createTextGeometries(font))
-);
+fontLoader.load("/fonts/autour.json", (font) => {
+  textGeometries.set("autour", createTextGeometries(font));
+  addDices(settings.totalDices);
+});
 fontLoader.load("/fonts/kanit.json", (font) =>
   textGeometries.set("kanit", createTextGeometries(font))
 );
@@ -92,7 +82,14 @@ gui
   .min(1)
   .max(9)
   .step(1)
-  .onFinishChange((total) => createDices(total, settings.font));
+  .onFinishChange((total) => {
+    const delta = total - dices.length;
+    if (delta > 0) {
+      addDices(delta);
+    } else if (delta < 0) {
+      removeDices(Math.abs(delta));
+    }
+  });
 gui
   .add(settings, "font")
   .min(1)
@@ -123,7 +120,6 @@ gui.add(settings, "throw");
 
 function tick() {
   requestAnimationFrame(tick);
-  if (dices.length === 0 && textGeometries.has("autour")) createDices();
   const elapsedTime = clock.getElapsedTime();
   const deltaTime = elapsedTime - oldElapsedTime;
   oldElapsedTime = elapsedTime;
@@ -151,9 +147,7 @@ function createTextGeometries(font) {
   return textGeometries;
 }
 
-function createDices(total = settings.totalDices, key = settings.font) {
-  const font = fonts.get(key);
-  removeDices();
+function addDices(total) {
   for (let i = 0; i < total; i++) {
     dices.push(
       new Dice(
@@ -161,17 +155,18 @@ function createDices(total = settings.totalDices, key = settings.font) {
         render.world,
         geometry,
         material,
-        initialPositions.get(i),
-        textGeometries.get(font),
+        textGeometries.get(fonts.get(settings.font)),
         textMaterial
       )
     );
   }
 }
 
-function removeDices() {
-  for (const dice of dices) {
-    dice.remove();
+function removeDices(total) {
+  while (total > 0) {
+    dices[dices.length - 1].remove();
+    dices.pop();
+    total--;
   }
 }
 
