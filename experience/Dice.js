@@ -14,6 +14,8 @@ export default class Dice {
     this.scene = scene;
     this.world = world;
     this.mesh = new THREE.Mesh(geometry, material);
+    this.mesh.castShadow = true;
+
     this.group = new THREE.Group();
     this.group.add(this.mesh);
 
@@ -47,7 +49,6 @@ export default class Dice {
     }
 
     this.group.position.set(initialPosition.x, 3, initialPosition.z);
-    this.group.castShadow = true;
     scene.add(this.group);
 
     this.body = new CANNON.Body({
