@@ -15,6 +15,7 @@ import vertexShader from "./shaders/vertex.glsl";
 // Constants
 const dices = [];
 const settings = {
+  floor: 1,
   font: 1,
   primaryColor: 0x0000ff,
   secondaryColor: 0x00ffff,
@@ -31,6 +32,15 @@ const fonts = new Map([
 
 // Loaders
 const fontLoader = new FontLoader();
+const textureLoader = new THREE.TextureLoader();
+
+// Textures
+const mapWood = textureLoader.load("./textures/wood/map.jpg");
+const aoMapWood = textureLoader.load("./textures/wood/aoMap.jpg");
+const mapMarble = textureLoader.load("./textures/marble/map.jpg");
+const aoMapMarble = textureLoader.load("./textures/marble/aoMap.jpg");
+const mapMetal = textureLoader.load("./textures/metal/map.jpg");
+const aoMapMetal = textureLoader.load("./textures/metal/aoMap.jpg");
 
 // Materials
 const textMaterial = new THREE.MeshBasicMaterial({ color: settings.textColor });
@@ -39,6 +49,34 @@ const fragmentShaders = new Map([
   [2, gradientFragmentShader],
   [3, circleFragmentShader],
 ]);
+const floorMaterials = new Map();
+floorMaterials.set(
+  1,
+  new THREE.ShadowMaterial({
+    opacity: 0.1,
+  })
+);
+floorMaterials.set(
+  2,
+  new THREE.MeshStandardMaterial({
+    map: mapWood,
+    aoMap: aoMapWood,
+  })
+);
+floorMaterials.set(
+  3,
+  new THREE.MeshStandardMaterial({
+    map: mapMarble,
+    aoMap: aoMapMarble,
+  })
+);
+floorMaterials.set(
+  4,
+  new THREE.MeshStandardMaterial({
+    map: mapMetal,
+    aoMap: aoMapMetal,
+  })
+);
 const material = new THREE.ShaderMaterial({
   vertexShader,
   fragmentShader: fragmentShaders.get(settings.type),
@@ -67,7 +105,11 @@ const canvas = document.querySelector("canvas.webgl");
 THREE.ColorManagement.enabled = false;
 const render = new Render(canvas);
 new Lights(scene);
-new Environment(scene, render.world);
+const environment = new Environment(
+  scene,
+  render.world,
+  floorMaterials.get(settings.floor)
+);
 
 const geometry = new RoundedBoxGeometry(1, 1, 1);
 const labelTextGeometries = [...Array(6).keys()].map((i) => i + 1);
@@ -116,6 +158,14 @@ gui
 gui
   .addColor(settings, "textColor")
   .onChange(() => textMaterial.color.set(settings.textColor));
+gui
+  .add(settings, "floor")
+  .min(1)
+  .max(4)
+  .step(1)
+  .onFinishChange((type) => {
+    environment.updateFloorMaterial(floorMaterials.get(type));
+  });
 gui.add(settings, "throw");
 
 function tick() {

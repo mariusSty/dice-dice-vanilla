@@ -2,7 +2,7 @@ import * as CANNON from "cannon-es";
 import * as THREE from "three";
 
 export default class Environment {
-  constructor(scene, world) {
+  constructor(scene, world, floorMaterial) {
     // Walls
     this.back = this.createWall(world, new CANNON.Vec3(0, 5, -5));
     this.front = this.createWall(world, new CANNON.Vec3(0, 5, 5), {
@@ -19,7 +19,7 @@ export default class Environment {
     });
 
     // Floor
-    this.floor = this.createFloor(scene, world);
+    this.floor = this.createFloor(scene, world, floorMaterial);
   }
 
   createWall(world, position, quaternion) {
@@ -37,13 +37,8 @@ export default class Environment {
     return wall;
   }
 
-  createFloor(scene, world) {
-    const mesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(10, 10),
-      new THREE.ShadowMaterial({
-        opacity: 0.1,
-      })
-    );
+  createFloor(scene, world, material) {
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), material);
     mesh.receiveShadow = true;
     mesh.rotation.x = -Math.PI * 0.5;
     scene.add(mesh);
@@ -53,5 +48,10 @@ export default class Environment {
     });
     floor.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI * 0.5);
     world.addBody(floor);
+    return mesh;
+  }
+
+  updateFloorMaterial(material) {
+    this.floor.material = material;
   }
 }
